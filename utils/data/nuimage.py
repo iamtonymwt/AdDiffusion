@@ -1,5 +1,5 @@
 import random
-
+import pdb
 import torch
 
 from mmdet.datasets.builder import DATASETS
@@ -61,6 +61,9 @@ class NuImageDataset(CocoDataset):
             areas = (bboxes[:, 2] - bboxes[:, 0]) * (bboxes[:, 3] - bboxes[:, 1])
             labels = [self.CLASSES[each].split('.')[-1] for each in data['gt_labels'].data]
             camera = ' '.join(data['img_metas'].data['ori_filename'].split('/')[-2].split('_')[1:])
+            weather = data['img_metas'].data['ori_filename'].split('__')[3]
+            time = data['img_metas'].data['ori_filename'].split('__')[4]
+            location = data['img_metas'].data['ori_filename'].split('.')[0].split('__')[-1]
             
             if self.prompt_version == 'v1':
                 pad_shape = data['img_metas'].data['pad_shape']
@@ -105,7 +108,51 @@ class NuImageDataset(CocoDataset):
                     text = 'A driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) if random.random() > self.uncond_prob else ""
                 else:
                     text = 'A driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs)
+            if self.prompt_version == 'v50':
+                pad_shape = data['img_metas'].data['pad_shape']
+                img_shape = torch.tensor([pad_shape[1], pad_shape[0], pad_shape[1], pad_shape[0]])
+                bboxes /= img_shape
                 
+                # random shuffle bbox annotations
+                index = list(range(len(labels)))
+                random.shuffle(index)
+                index = index[:22] # 9+3*22+2=77
+                
+                # generate bbox mask and text prompt
+                # constant: background -> 0, foreground -> self.foreground_loss_weight
+                # area:     background -> 0, foreground -> 1 / area ^ self.foreground_loss_weight (for area, smaller weight, larger variance with respect to areas)
+                objs = []
+                bbox_mask = torch.zeros(self.FEAT_SIZE).float() # [H, W]
+                for each in index:
+                    label = labels[each]
+                    bbox = bboxes[each]
+                    
+                    # generate bbox mask
+                    FEAT_SIZE = torch.tensor([self.FEAT_SIZE[1], self.FEAT_SIZE[0], self.FEAT_SIZE[1], self.FEAT_SIZE[0]])
+                    coord = torch.round(bbox * FEAT_SIZE).int().tolist()
+                    # bbox_mask[coord[1]: coord[3], coord[0]: coord[2]] = self.foreground_loss_weight if self.foreground_loss_mode == 'constant' else \
+                    #                                                     1 / torch.pow(torch.tensor((coord[3] - coord[1] + 1) * (coord[2] - coord[0] + 1)), self.foreground_loss_weight)
+                    if label in ['truck', 'bicycle', 'motorcycle']:
+                        bbox_mask[coord[1]: coord[3], coord[0]: coord[2]] = self.foreground_loss_weight * 2 * 1 / torch.pow(torch.tensor((coord[3] - coord[1] + 1) * (coord[2] - coord[0] + 1)), 0.2) if self.foreground_loss_mode == 'constant' else \
+                                                                        1 / torch.pow(torch.tensor((coord[3] - coord[1] + 1) * (coord[2] - coord[0] + 1)), self.foreground_loss_weight)
+                    else:
+                        bbox_mask[coord[1]: coord[3], coord[0]: coord[2]] = self.foreground_loss_weight * 1 / torch.pow(torch.tensor((coord[3] - coord[1] + 1) * (coord[2] - coord[0] + 1)), 0.2) if self.foreground_loss_mode == 'constant' else \
+                                                                        1 / torch.pow(torch.tensor((coord[3] - coord[1] + 1) * (coord[2] - coord[0] + 1)), self.foreground_loss_weight)
+                    
+                    # generate text prompt
+                    bbox = self.token_pair_from_bbox(bbox.tolist())
+                    objs.append(' '.join([self.class2text[label], bbox]))
+                
+                # bbox_mask[bbox_mask == 0] = 1 if self.foreground_loss_mode == 'constant' else 1 / torch.pow(torch.sum(bbox_mask == 0), self.foreground_loss_weight)
+                bbox_mask[bbox_mask == 0] = 1 * 1 / torch.pow(torch.tensor(self.FEAT_SIZE[0] * self.FEAT_SIZE[1]), 0.2) if self.foreground_loss_mode == 'constant' else 1 / torch.pow(torch.tensor(self.FEAT_SIZE[0] * self.FEAT_SIZE[1]), self.foreground_loss_weight)
+                bbox_mask = bbox_mask / torch.sum(bbox_mask) * self.FEAT_SIZE[0] * self.FEAT_SIZE[1] if self.foreground_loss_norm else bbox_mask
+                
+                if self.uncond_prob > 0:
+                    # text = 'A driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) if random.random() > self.uncond_prob else ""
+                    text = 'A ' + weather.lower() + ' ' + time.lower() + ' ' + location.lower() + ' driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) if random.random() > self.uncond_prob else ""
+                else:
+                    text = 'A ' + weather.lower() + ' ' + time.lower() + ' ' + location.lower() + ' driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) 
+
             else:
                 raise NotImplementedError("Prompt version {} is not supported!".format(self.prompt_version))
             

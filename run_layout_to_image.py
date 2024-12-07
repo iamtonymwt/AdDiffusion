@@ -72,7 +72,7 @@ def run_layout_to_image(layout, args):
 if __name__ == "__main__":
   parser = ArgumentParser(description='Layout-to-image generation script')
   parser.add_argument('ckpt_path', type=str)
-  parser.add_argument('--nsamples', type=int, default=50)
+  parser.add_argument('--nsamples', type=int, default=1)
   parser.add_argument('--cfg_scale', type=float, default=None)
   parser.add_argument('--num_inference_steps', type=int, default=None)
   parser.add_argument('--output_dir', type=str, default="./results/")

@@ -178,3 +178,11 @@ wandb
 outputs
 
 geo*/
+
+*.tgz
+
+results/
+
+work_dirs/
+
+geodiffusion-nuimages-time-weather-512x512/

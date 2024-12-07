@@ -683,8 +683,7 @@ def main():
         if args.train_text_encoder:
             text_encoder.train()
         train_loss = 0.0
-        for step, batch in enumerate(train_dataloader):
-            pdb.set_trace()  
+        for step, batch in enumerate(train_dataloader): 
             # for gradient accumulation
             with accelerator.accumulate(unet):
                 # Convert images to latent space

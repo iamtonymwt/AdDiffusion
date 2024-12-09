@@ -9,7 +9,7 @@ from utils.generation_utils import load_checkpoint, bbox_encode, draw_layout
 # Set random seed
 #########################
 from accelerate.utils import set_seed
-set_seed(0)
+set_seed(2)
 
 def run_layout_to_image(layout, args):
   ########################
@@ -90,8 +90,9 @@ if __name__ == "__main__":
   ########################
   layout = {
     "camera": "back",
-    "timeofday": "night",
+    "timeofday": "daytime",
     "weather": "rain",
+    "location": "singapore",
     "bbox": [
       ["car", 0.76625, 0.5277777777777778, 0.88375, 0.6288888888888889],
       ["car", 0.51125, 0.5066666666666667, 0.575625, 0.5933333333333334],

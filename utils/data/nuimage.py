@@ -149,9 +149,9 @@ class NuImageDataset(CocoDataset):
                 
                 if self.uncond_prob > 0:
                     # text = 'A driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) if random.random() > self.uncond_prob else ""
-                    text = 'A ' + weather.lower() + ' ' + time.lower() + ' ' + location.lower() + ' driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) if random.random() > self.uncond_prob else ""
+                    text = 'A ' + time.lower() + ' ' + weather.lower() + ' ' + location.lower() + ' driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) if random.random() > self.uncond_prob else ""
                 else:
-                    text = 'A ' + weather.lower() + ' ' + time.lower() + ' ' + location.lower() + ' driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) 
+                    text = 'A ' + time.lower() + ' ' + weather.lower() + ' ' + location.lower() + ' driving scene image of ' + camera.lower() + ' camera with ' + ' '.join(objs) 
 
             else:
                 raise NotImplementedError("Prompt version {} is not supported!".format(self.prompt_version))

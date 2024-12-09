@@ -46,6 +46,50 @@ samples/{cam_pos}/{info}__{cam_pos}__{timestamp}__{weather)__{light}__{location}
     python run_layout_to_image.py $CKPT_PATH --output_dir ./results/
     ```
 
+## Differential Attention
+in /anaconda3/envs/geodiffusion/lib/python3.9/site-packages/diffusers/models/attention_processor.py
+1. Adjust the 'Attention' Class 
+    ```
+    self.head_dim = self.inner_dim // self.heads // 2
+    self.lambda_init = 0.8 - 0.6 * math.exp(-0.3 * 8)
+    self.lambda_q1 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+    self.lambda_k1 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+    self.lambda_q2 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+    self.lambda_k2 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+    ```
+2. Adjust the 'AttnProcesser2_0' Class
+    ```
+    # torch.Size([2, 8, 4096, 40])
+    q1 = query[:, :, :, 0:head_dim//2]
+    q2 = query[:, :, :, head_dim//2:]
+    k1 = key[:, :, :, 0:head_dim//2]
+    k2 = key[:, :, :, head_dim//2:]
+
+    # calculate two attention maps
+    attention_score1 = torch.matmul(q1, k1.transpose(-1, -2))
+    attention_score2 = torch.matmul(q2, k2.transpose(-1, -2))
+
+    attention_score1 = attention_score1 / math.sqrt(head_dim)
+    attention_score2 = attention_score2 / math.sqrt(head_dim)
+
+    attention_probs1 = nn.functional.softmax(attention_score1, dim=-1)
+    attention_probs2 = nn.functional.softmax(attention_score2, dim=-1)
+    
+
+    # calculate the difference
+    lambda_1 = torch.exp(torch.sum(attn.lambda_q1 * attn.lambda_k1, dim=-1).float()).type_as(q1)
+    lambda_2 = torch.exp(torch.sum(attn.lambda_q2 * attn.lambda_k2, dim=-1).float()).type_as(q1)
+    lambda_full = lambda_1 - lambda_2 + attn.lambda_init
+
+    attention_probs = attention_probs1 - lambda_full * attention_probs2
+    
+    # Mask heads if we want to
+    if attention_mask is not None:
+        attention_probs = attention_probs * attention_mask
+
+    hidden_states = torch.matmul(attention_probs, value)
+    ```
+
 
 ## train
 1. update reading path 

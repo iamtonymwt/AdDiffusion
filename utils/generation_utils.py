@@ -52,7 +52,7 @@ COLOR_PALETTE = [(30, 118, 179), (255, 126, 13), (43, 159, 43), (213, 38, 39), (
 # Loading
 #####################
 def load_checkpoint(ckpt_path, pipeline=diffusers.StableDiffusionPipeline):
-    pipe = pipeline.from_pretrained(ckpt_path, torch_dtype=torch.float16)
+    pipe = pipeline.from_pretrained(ckpt_path, torch_dtype=torch.float16, low_cpu_mem_usage=False, device_map=None)
     generation_config = json.load(open(os.path.join(ckpt_path, "generation_config.json")))
     generation_config['dataset2classes'] = dataset2classes[generation_config['dataset']]
 

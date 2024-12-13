@@ -9,7 +9,7 @@ from utils.generation_utils import load_checkpoint, bbox_encode, draw_layout
 # Set random seed
 #########################
 from accelerate.utils import set_seed
-set_seed(2)
+# set_seed(2)
 
 def run_layout_to_image(layout, args):
   ########################
@@ -72,7 +72,7 @@ def run_layout_to_image(layout, args):
 if __name__ == "__main__":
   parser = ArgumentParser(description='Layout-to-image generation script')
   parser.add_argument('ckpt_path', type=str)
-  parser.add_argument('--nsamples', type=int, default=1)
+  parser.add_argument('--nsamples', type=int, default=10)
   parser.add_argument('--cfg_scale', type=float, default=None)
   parser.add_argument('--num_inference_steps', type=int, default=None)
   parser.add_argument('--output_dir', type=str, default="./results/")
@@ -89,16 +89,12 @@ if __name__ == "__main__":
   
   ########################
   layout = {
-    "camera": "back",
+    "camera": "front",
     "timeofday": "daytime",
-    "weather": "rain",
-    "location": "singapore",
+    "weather": "sunny",
+    "location": "boston",
     "bbox": [
-      ["car", 0.76625, 0.5277777777777778, 0.88375, 0.6288888888888889],
-      ["car", 0.51125, 0.5066666666666667, 0.575625, 0.5933333333333334],
-      ["car", 0.614375, 0.5133333333333333, 0.675625, 0.5844444444444444],
-      ["car", 0.4075, 0.5177777777777778, 0.460625, 0.5833333333333334],
-      ["car", 0.57, 0.5088888888888888, 0.61625, 0.5711111111111111],
+      ["car", 0.66625, 0.4277777777777778, 0.88375, 0.6288888888888889],      
     ]
   }
   

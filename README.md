@@ -126,6 +126,20 @@ samples/{cam_pos}/{info}__{cam_pos}__{timestamp}__{weather)__{light}__{location}
     python run_layout_to_image.py $CKPT_PATH --output_dir ./results/
     ```
 
+## Run Evaluation
+1. install clip
+    ```
+    pip install git+https://github.com/openai/CLIP.git
+    ```
+2. Test CLIP Similarity
+    ```
+    python /AdDiffusion/eval/clip_similarity.py
+    ```
+3. Test FID
+    ```
+    python /AdDiffusion/eval/fid.py
+    ```
+
 ## Demos
 <div align="center">
 <img src="assets/visualizaton1.png" alt="" width="1000">
